@@ -1,42 +1,19 @@
-<!doctype html>
+ <!doctype html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="./favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="./style.css">
-    <title>Phaser - Hello World</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
+    <title>Phaser -Template</title>
 </head>
 
 <body>
     <div id="app">
         <div id="game-container"></div>
     </div>
-    <script>
-        const config = {
-            type: Phaser.AUTO,
-            width: 800,
-            height: 600,
-            backgroundColor: '#2d2d2d',
-            scene: {
-                preload: preload,
-                create: create
-            }
-        };
-
-        const game = new Phaser.Game(config);
-
-        function preload() {
-            // Preload assets if needed (not used here)
-        }
-
-        function create() {
-            this.add.text(400, 300, 'Hello World!', {
-                font: '40px Arial',
-                fill: '#ffffff'
-            }).setOrigin(0.5);
-        }
+    <script src="./bundle.js">
+        alert("Hello, World!");
     </script>
 </body>
 </html>
