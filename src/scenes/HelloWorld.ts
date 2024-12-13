@@ -28,7 +28,7 @@ export class HelloWorld extends Scene
 
         this.input.once('pointerdown', () => {
 
-            this.scene.start('HelloWorld');
+            this.scene.start('MainMenu');
 
         });
     }
