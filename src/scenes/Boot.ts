@@ -13,7 +13,7 @@ export class Boot extends Scene
         //  such as a game logo or background.
         //  The smaller the file size of the assets, the better, as the Boot Scene itself has no preloader.
 
-        this.load.image('background', 'assets/bg.png'); // Background image for Boot scene
+        this.load.image('background', 'assets/background.png'); // Background image for Boot scene
         this.load.image('logo', 'assets/logo.png'); // Placeholder for any logo
 
         // Any other assets needed for the initial scene loading can go here

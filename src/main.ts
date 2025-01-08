@@ -6,13 +6,22 @@ import { Preloader } from './scenes/Preloader';
 
 import { Game, Types } from "phaser";
 
-//  Find out more information about the Game Config at:
-//  https://newdocs.phaser.io/docs/3.70.0/Phaser.Types.Core.GameConfig
+// Ensure the container exists or create it dynamically
+const containerId = 'game-container';
+let container = document.getElementById(containerId);
+
+if (!container) {
+    container = document.createElement('div');
+    container.id = containerId;
+    document.body.appendChild(container);
+}
+
+// Set up Phaser game configuration
 const config: Types.Core.GameConfig = {
     type: Phaser.AUTO,
     width: 1024,
     height: 768,
-    parent: 'game-container',
+    parent: containerId, // Ensure it matches the created container
     backgroundColor: '#028af8',
     scale: {
         mode: Phaser.Scale.FIT,

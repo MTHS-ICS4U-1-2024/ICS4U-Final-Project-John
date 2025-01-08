@@ -1,16 +1,14 @@
-import { Scene, GameObjects, Physics } from 'phaser';
+import { Scene, Types } from 'phaser';
 
 export class Game extends Scene {
     camera: Phaser.Cameras.Scene2D.Camera;
     background: Phaser.GameObjects.Image;
     msg_text: Phaser.GameObjects.Text;
     player: Phaser.GameObjects.Sprite;
-    cursors: Phaser.Input.Keyboard.CursorKeys;
-
-    // Store rows and obstacles
+    cursors: Types.Input.Keyboard.CursorKeys;
+    timeBonus: number = 2000;
+    furthestRow: number = 700;
     rows: any[] = [];
-
-    // Variables for game state
     lives: number = 3;
     score: number = 0;
 
@@ -18,35 +16,56 @@ export class Game extends Scene {
         super('Game');
     }
 
-    preload() {
-        // Load necessary assets for the game
-        this.load.image('background', 'assets/bg.png');
-        this.load.image('frog', 'assets/frog.png');
-        this.load.image('log', 'assets/log.png');
-        this.load.image('car', 'assets/car.png');
-        this.load.image('goal', 'assets/goal.png');
-        this.load.image('road', 'assets/road.png'); 
-        this.load.image('water', 'assets/water.png');
-        this.load.image('grass', 'assets/grass.png');
-        this.load.image('turtle', 'assets/turtle.png');
-    }
-
     create() {
         // Set up the camera and background
         this.camera = this.cameras.main;
         this.camera.setBackgroundColor(0x00ff00);
 
-        // Background sections
-        this.add.image(512, 100, 'grass');  // Grass section
-        this.add.image(512, 300, 'water');  // Water section
-        this.add.image(512, 500, 'road');   // Road section
+        // Add background sections
+        this.add.image(512, 100, 'grass');
+        this.add.image(512, 300, 'water');
+        this.add.image(512, 500, 'road');
 
         // Create the player (frog)
-        this.player = this.add.sprite(512, 600, 'frog');
-        this.player.setOrigin(0.5);
+        this.player = this.add.sprite(512, 700, 'frog').setOrigin(0.5);
+
+        // Add a timer event to decrease the time bonus
+        this.time.addEvent({
+            delay: 100, // Decrease bonus every 100ms
+            callback: () => {
+                if (this.timeBonus > 0) this.timeBonus -= 1;
+            },
+            loop: true
+        });
 
         // Set up keyboard controls
-        this.cursors = this.input.keyboard.createCursorKeys();
+        if (this.input.keyboard) {
+            this.cursors = this.input.keyboard.createCursorKeys();
+        }
+
+        // Frog Hopping Animation
+        this.anims.create({
+            key: 'frog_hop',
+            frames: this.anims.generateFrameNumbers('frog_hop', { start: 0, end: 3 }),
+            frameRate: 10,
+            repeat: 0 // Play once per input
+        });
+
+        // Frog Dying Animation
+        this.anims.create({
+            key: 'frog_dead',
+            frames: this.anims.generateFrameNumbers('frog_dead', { start: 0, end: 3 }),
+            frameRate: 10,
+            repeat: 0
+        });
+
+        // Turtle Diving Animation
+        this.anims.create({
+            key: 'turtle_dive',
+            frames: this.anims.generateFrameNumbers('turtle_dive', { start: 0, end: 3 }),
+            frameRate: 8,
+            repeat: -1 // Loop the animation
+        });
 
         // Initialize obstacles (rows of obstacles)
         this.initializeObstacles();
@@ -66,21 +85,34 @@ export class Game extends Scene {
     }
 
     update() {
-        // Handle player movement (frog)
         this.handlePlayerMovement();
+        this.handleGoalReach(); // Check if the frog reached the goal
+    
+        if (this.timeBonus <= 0) {
+            this.handleCollision(); // Lose a life
+            this.timeBonus = 2000; // Reset time bonus
+            this.player.setPosition(512,700); // Reset position
+            this.furthestRow = 700; // Reset progress
+        }
     }
+    
 
     handlePlayerMovement() {
         if (this.cursors.left.isDown) {
             this.player.x -= 5;
+            this.player.play('frog_hop', true); // Play hopping animation
         } else if (this.cursors.right.isDown) {
             this.player.x += 5;
+            this.player.play('frog_hop', true);
         } else if (this.cursors.up.isDown) {
             this.player.y -= 5;
+            this.player.play('frog_hop', true);
         } else if (this.cursors.down.isDown) {
             this.player.y += 5;
+            this.player.play('frog_hop', true);
         }
     }
+    
 
     initializeObstacles() {
         // Define rows of obstacles (moving objects like cars, logs, turtles)
@@ -139,7 +171,7 @@ export class Game extends Scene {
         // Check if the frog collides with any obstacles
         this.rows.forEach(row => {
             row.obstacles.forEach(obstacle => {
-                if (this.player.getBounds().intersects(obstacle.getBounds())) {
+                this.physics.world.overlap(this.player, obstacle, () => {
                     if (obstacle.type === 'turtle' && !obstacle.isVisible) {
                         // Player loses a life if standing on a turtle that goes into the water
                         this.handleCollision();
@@ -147,25 +179,44 @@ export class Game extends Scene {
                         // Handle collision with cars and logs
                         this.handleCollision();
                     }
-                }
+                });
             });
         });
     }
 
     handleCollision() {
-        // Decrease lives if a collision occurs
-        this.lives -= 1;
-        this.msg_text.setText(`Lives: ${this.lives}  Score: ${this.score}`);
-        
-        if (this.lives <= 0) {
-            this.scene.start('GameOver');
-        }
+        this.player.play('frog_dead', true); // Play dying animation
+    
+        // Add a slight delay before resetting position
+        this.time.delayedCall(1000, () => {
+            this.lives -= 1;
+            this.registry.set('lives', this.lives); // Store lives in registry
+            this.registry.set('score', this.score); // Store score in registry
+    
+            this.msg_text.setText(`Lives: ${this.lives}  Score: ${this.score}`);
+    
+            if (this.lives <= 0) {
+                this.scene.start('GameOver'); // Transition to GameOver scene
+            } else {
+                // Reset player position
+                this.player.setPosition(512, 700);
+            }
+        });
     }
-
-    // You can add functions for detecting goal completion and scoring here as well
+    
+    
     handleGoalReach() {
-        // Example for checking if the frog reaches a goal
-        this.score += 100;
-        this.msg_text.setText(`Lives: ${this.lives}  Score: ${this.score}`);
+        if (this.player.y <= 100) { // Goal area
+            this.score += 500; // Base goal score
+            this.score += this.timeBonus; // Add time bonus
+            this.registry.set('score', this.score); // Store score in registry
+            this.registry.set('lives', this.lives); // Store lives in registry
+            this.msg_text.setText(`Lives: ${this.lives}  Score: ${this.score}`);
+    
+            // Reset for the next round
+            this.player.setPosition(512, 700);
+            this.furthestRow = 700;
+            this.timeBonus = 2000; // Reset time bonus
+        }
     }
 }
