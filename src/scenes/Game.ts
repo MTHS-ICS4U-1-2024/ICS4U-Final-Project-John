@@ -21,13 +21,15 @@ export class Game extends Scene {
         this.camera = this.cameras.main;
         this.camera.setBackgroundColor(0x00ff00);
 
-        // Add background sections
-        this.add.image(512, 100, 'grass');
-        this.add.image(512, 300, 'water');
-        this.add.image(512, 500, 'road');
+        // Add the gameboard background and divide it into sections
+        this.add.image(512, 60, 'gameboard').setCrop(0, 0, 960, 256); // Goal Area (top part)
+        this.add.image(512, 180, 'gameboard').setCrop(0, 256, 960, 256); // Water Area
+        this.add.image(512, 300, 'gameboard').setCrop(0, 512, 960, 256); // Grass Area (Safe spots)
+        this.add.image(512, 420, 'gameboard').setCrop(0, 768, 960, 256); // Road Area (where cars are)
+        this.add.image(512, 540, 'gameboard').setCrop(0, 1024, 960, 256); // Bottom Grass Area (Safe spots)
 
         // Create the player (frog)
-        this.player = this.add.sprite(512, 700, 'frog').setOrigin(0.5);
+        this.player = this.add.sprite(512, 540, 'frog').setOrigin(0.5);
 
         // Add a timer event to decrease the time bonus
         this.time.addEvent({
@@ -87,11 +89,11 @@ export class Game extends Scene {
     update() {
         this.handlePlayerMovement();
         this.handleGoalReach(); // Check if the frog reached the goal
-    
-        if (this.timeBonus <= 0) {
+
+        if (this.timeBonus > 0) this.timeBonus -= 1; {
             this.handleCollision(); // Lose a life
             this.timeBonus = 2000; // Reset time bonus
-            this.player.setPosition(512,700); // Reset position
+            this.player.setPosition(512, 540); // Reset position
             this.furthestRow = 700; // Reset progress
         }
     }
@@ -112,30 +114,28 @@ export class Game extends Scene {
             this.player.play('frog_hop', true);
         }
     }
-    
 
     initializeObstacles() {
         // Define rows of obstacles (moving objects like cars, logs, turtles)
         this.rows = [
-            // Row 1 (Logs and Turtles moving to both left and right)
             {
-                top: 300, // Y position (water area)
-                direction: 'BOTH', // Both directions
+                top: 180, // Y position (Water Area)
+                direction: 'BOTH', 
                 speed: 2,
                 obstacles: [
-                    { type: 'log', x: 100, y: 300, speed: 2, direction: 'RIGHT' },
-                    { type: 'log', x: 1200, y: 300, speed: 2, direction: 'LEFT' },
-                    { type: 'turtle', x: 700, y: 300, speed: 1, isVisible: true, direction: 'RIGHT' },
-                    { type: 'turtle', x: 1000, y: 300, speed: 1, isVisible: true, direction: 'LEFT' }
+                    { type: 'log', x: 100, y: 180, speed: 2, direction: 'RIGHT' },
+                    { type: 'log', x: 1200, y: 180, speed: 2, direction: 'LEFT' },
+                    { type: 'turtle', x: 700, y: 180, speed: 1, isVisible: true, direction: 'RIGHT' },
+                    { type: 'turtle', x: 1000, y: 180, speed: 1, isVisible: true, direction: 'LEFT' }
                 ]
             },
             {
-                top: 500, // Row with cars moving to both left and right (road area)
+                top: 420, // Y position (Road Area)
                 direction: 'BOTH',
                 speed: 3,
                 obstacles: [
-                    { type: 'car', x: 800, y: 500, speed: 3, direction: 'LEFT' },
-                    { type: 'car', x: 1100, y: 500, speed: 3, direction: 'RIGHT' }
+                    { type: 'car', x: 800, y: 420, speed: 3, direction: 'LEFT' },
+                    { type: 'car', x: 1100, y: 420, speed: 3, direction: 'RIGHT' }
                 ]
             }
         ];
@@ -199,14 +199,13 @@ export class Game extends Scene {
                 this.scene.start('GameOver'); // Transition to GameOver scene
             } else {
                 // Reset player position
-                this.player.setPosition(512, 700);
+                this.player.setPosition(512, 540);
             }
         });
     }
     
-    
     handleGoalReach() {
-        if (this.player.y <= 100) { // Goal area
+        if (this.player.y <= 60) { // Goal area (top part of the screen)
             this.score += 500; // Base goal score
             this.score += this.timeBonus; // Add time bonus
             this.registry.set('score', this.score); // Store score in registry
@@ -214,7 +213,7 @@ export class Game extends Scene {
             this.msg_text.setText(`Lives: ${this.lives}  Score: ${this.score}`);
     
             // Reset for the next round
-            this.player.setPosition(512, 700);
+            this.player.setPosition(512, 540);
             this.furthestRow = 700;
             this.timeBonus = 2000; // Reset time bonus
         }

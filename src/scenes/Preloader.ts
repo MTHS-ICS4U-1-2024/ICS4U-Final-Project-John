@@ -27,14 +27,11 @@ export class Preloader extends Scene {
 
         // Load general assets
         this.load.image('logo', 'logo.png');
-        this.load.image('background', 'bg.png');
+        this.load.image('background', 'background.png');
         this.load.image('frog', 'frog.png');
         this.load.image('log', 'log.png');
         this.load.image('car', 'car.png');
-        this.load.image('goal', 'goal.png');
-        this.load.image('road', 'road.png');
-        this.load.image('water', 'water.png');
-        this.load.image('grass', 'grass.png');
+        this.load.image('gameboard', 'assets/gameboard.png');
         this.load.image('turtle', 'turtle.png');
 
         // Load spritesheets for animations
@@ -44,7 +41,7 @@ export class Preloader extends Scene {
     }
 
     create() {
-        // Transition to the MainMenu scene after assets are loaded
+        // After assets are loaded, transition to the MainMenu scene
         this.scene.start('MainMenu');
     }
 }
