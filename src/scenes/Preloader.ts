@@ -6,14 +6,14 @@ export class Preloader extends Scene {
     }
 
     init() {
-        // Display a background image (optional, loaded in the Boot scene)
+        // Display a background image (ensure it is loaded in Boot or Preloader)
         this.add.image(512, 384, 'background');
 
         // A simple progress bar outline
         this.add.rectangle(512, 384, 468, 32).setStrokeStyle(1, 0xffffff);
 
         // Progress bar itself
-        const bar = this.add.rectangle(512 - 230, 384, 4, 28, 0xffffff);
+        const bar = this.add.rectangle(512 - 230, 384, 4, 28, 0xffffff).setOrigin(0, 0.5);
 
         // Update the progress bar width based on loading progress
         this.load.on('progress', (progress: number) => {
@@ -31,7 +31,7 @@ export class Preloader extends Scene {
         this.load.image('frog', 'frog.png');
         this.load.image('log', 'log.png');
         this.load.image('car', 'car.png');
-        this.load.image('gameboard', 'assets/gameboard.png');
+        this.load.image('gameboard', 'gameboard.png'); // Corrected path
         this.load.image('turtle', 'turtle.png');
 
         // Load spritesheets for animations

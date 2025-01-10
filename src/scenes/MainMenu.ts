@@ -23,6 +23,17 @@ export class MainMenu extends Scene {
             align: 'center'
         }).setOrigin(0.5); // Added some space between text and logo by moving text position down
 
+        // Apply Ken Burns effect (zooming in and out)
+        this.tweens.add({
+            targets: this.title,
+            scale: 1.2, // Zoom in to 120% scale
+            alpha: 0.8, // Fade in slightly
+            duration: 1500, // Duration for the zooming and fading
+            yoyo: true, // Make it go back to original state after each animation cycle
+            repeat: -1, // Repeat infinitely
+            ease: 'Sine.easeInOut', // Smooth easing for the zoom effect
+        });
+
         // Add a keyboard input event to change scene when spacebar is pressed
         this.input.keyboard.on('keydown-SPACE', () => {
             console.log('Switching to Game scene...');
