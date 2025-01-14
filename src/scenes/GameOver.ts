@@ -47,7 +47,7 @@ export class GameOver extends Scene {
 
         // Listen for the space key to restart the game
         this.input.keyboard.on('keydown-SPACE', () => {
-            this.scene.start('GameLogic'); // Restart the GameLogic scene
+            this.scene.start('MainGame'); // Use the correct scene name, like 'MainGame'
         });
     }
 }

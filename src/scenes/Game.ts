@@ -1,14 +1,11 @@
 import { Scene } from 'phaser';
 import { Hud } from './Hud';
-import { Car } from './Car'; // Assuming you have a Car class for the cars
-import { Frog } from './Frog'; // Assuming you have a Frog class for the player character
-import { GameOver } from './GameOver'; // GameOver scene for handling the end of the game
+import { Car } from './Car';
+import { Frog } from './Frog';
 
 export class Game extends Scene {
-    private frog: Phaser.GameObjects.Sprite;
-    private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
+    private frog: Frog; // Using the Frog class
     private score: number;
-    private scoreText: Phaser.GameObjects.Text;
     private cars: Phaser.GameObjects.Group;
     private gameOver: boolean;
     private lives: number;
@@ -27,27 +24,14 @@ export class Game extends Scene {
         // Set up the gameboard background
         this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, 'gameboard');
 
-        // Create frog sprite and set initial position
-        this.frog = this.add.sprite(this.cameras.main.centerX, this.cameras.main.height - 100, 'frog');
-        this.frog.setOrigin(0.5);
-
-        // Set up keyboard input
-        this.cursors = this.input.keyboard.createCursorKeys();
-
-        // Display the score
-        this.scoreText = this.add.text(16, 16, 'Score: 0', {
-            fontFamily: 'Arial',
-            fontSize: '24px',
-            color: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: 4,
-        });
+        // Create the frog using the Frog class
+        this.frog = new Frog(this, this.cameras.main.centerX, this.cameras.main.height - 100, 'frog');
 
         // Add the HUD scene for lives and score
         this.hud = this.scene.add('Hud', Hud);
         this.scene.launch('Hud');
 
-        // Create a group for the cars (assuming you have a Car class)
+        // Create a group for the cars
         this.cars = this.physics.add.group({
             classType: Car,
             runChildUpdate: true, // Automatically update the cars in the group
@@ -73,37 +57,14 @@ export class Game extends Scene {
             return;
         }
 
-        // Handle frog movement
-        if (this.cursors.left.isDown) {
-            this.frog.x -= 5; // Move left
-        } else if (this.cursors.right.isDown) {
-            this.frog.x += 5; // Move right
-        }
-
-        if (this.cursors.up.isDown) {
-            this.frog.y -= 5; // Move up
-        } else if (this.cursors.down.isDown) {
-            this.frog.y += 5; // Move down
-        }
-
-        // Handle boundary checks for frog
-        if (this.frog.x < 0) {
-            this.frog.x = 0;
-        } else if (this.frog.x > this.cameras.main.width) {
-            this.frog.x = this.cameras.main.width;
-        }
-
-        if (this.frog.y < 0) {
-            this.frog.y = 0;
-        } else if (this.frog.y > this.cameras.main.height) {
-            this.frog.y = this.cameras.main.height;
-        }
+        // Update the frog
+        this.frog.update();
 
         // Update the score and lives in the HUD
         this.hud.updateScore(this.score);
         this.hud.updateLives(this.lives);
 
-        // Spawn new cars as needed
+        // Update all cars
         this.cars.children.iterate((car: Car) => {
             car.update();
         });
@@ -111,36 +72,44 @@ export class Game extends Scene {
 
     private checkGameOver() {
         // Check for frog reaching the goal
-        if (this.frog.y < 0) {
+        if (this.frog.hasReachedGoal()) {
             this.score += 10; // Increase score for crossing
-            this.frog.y = this.cameras.main.height - 100; // Reset frog position
+            this.frog.resetPosition(); // Reset frog position
         }
 
-        // If frog collides with a car, game over logic is triggered
-        if (this.frog.y > this.cameras.main.height) {
+        // If the frog's lives are 0, end the game
+        if (this.lives <= 0) {
             this.gameOver = true;
-            this.scene.start('GameOver', { score: this.score, lives: this.lives }); // Transition to Game Over scene
+            this.scene.start('GameOver', { score: this.score, lives: this.lives });
         }
     }
 
-    private handleCarCollision(frog: Phaser.GameObjects.Sprite, car: Car) {
+    private handleCarCollision(frog: Frog, car: Car) {
         // Decrease lives when the frog hits a car
         this.lives -= 1;
         this.hud.updateLives(this.lives);
 
         // Reset frog position if lives remain
         if (this.lives > 0) {
-            frog.setPosition(this.cameras.main.centerX, this.cameras.main.height - 100); // Reset position
+            this.frog.resetPosition();
         } else {
             // If no lives are left, go to the game over scene
             this.scene.start('GameOver', { score: this.score, lives: this.lives });
         }
     }
 
-    // Spawn cars periodically or as needed
     private spawnCars() {
         for (let i = 0; i < 5; i++) {
-            const car = new Car(this, Phaser.Math.Between(50, this.cameras.main.width - 50), 100 + i * 100, 'car');
+            const speed = Phaser.Math.Between(2, 5); // Randomize speed
+            const direction = Phaser.Math.Between(0, 1) === 0 ? 1 : -1; // Randomize direction
+            const car = new Car(
+                this,
+                direction === 1 ? -50 : this.cameras.main.width + 50, // Start off-screen
+                100 + i * 100, // Staggered vertical positions
+                'car', // Texture key
+                speed,
+                direction
+            );
             this.cars.add(car);
         }
     }
