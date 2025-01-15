@@ -11,6 +11,8 @@ body {
 
 #main-container {
     display: flex;
+    justify-content: center; /* Center the game horizontally */
+    align-items: center; /* Center the game vertically */
     flex-direction: row; /* Arrange backgrounds and game container horizontally */
     width: 100vw; /* Full viewport width */
     height: 100vh; /* Full viewport height (covering entire screen) */
@@ -36,7 +38,7 @@ body {
 
 #background-left {
     left: 0;
-    background: url('./assets/leftbg.jpg') center center / cover no-repeat; /* Set your left background image */
+    background: url('./assets/rightbg.jpg') center center / cover no-repeat; /* Set your left background image */
 }
 
 #background-right {
