@@ -36,14 +36,15 @@ body {
     z-index: 0; /* Below the game container */
 }
 
+/* Remove background images */
 #background-left {
     left: 0;
-    background: url('./assets/rightbg.jpg') center center / cover no-repeat; /* Set your left background image */
+    background: none; /* Remove left background image */
 }
 
 #background-right {
     right: 0;
-    background: url('./assets/rightbg.jpg') center center / cover no-repeat; /* Set your right background image */
+    background: none; /* Remove right background image */
 }
 
 /* Ensure the game canvas is responsive */

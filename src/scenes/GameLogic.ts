@@ -1,7 +1,8 @@
 import { Scene, GameObjects, Physics, Math as PhaserMath, Types } from 'phaser';
+import { Car } from './Car';
 
 export class GameLogic extends Scene {
-    private frog: GameObjects.Sprite;
+    private frog: Physics.Arcade.Sprite;
     private cars: Phaser.GameObjects.Group;
     private cursors: Types.Input.Keyboard.CursorKeys;
     private gameboard: Phaser.GameObjects.TileSprite;
@@ -11,13 +12,6 @@ export class GameLogic extends Scene {
 
     constructor() {
         super('GameLogic');
-    }
-
-    preload() {
-        // Load assets
-        this.load.image('frog', 'assets/frog.png');
-        this.load.image('car', 'assets/car.png');
-        this.load.image('gameboard', 'assets/gameboard.png');
     }
 
     create() {
@@ -30,15 +24,18 @@ export class GameLogic extends Scene {
         this.frog.setOrigin(0.5, 0.5);
         this.frog.setCollideWorldBounds(true); // Ensure frog stays within the world bounds
 
+        // Define frog animations
+        this.createFrogAnimations();
+
         // Set up input controls for the frog
         this.cursors = this.input.keyboard.createCursorKeys();
         if (!this.cursors) {
             throw new Error('Failed to create cursor keys');
         }
 
-        // Create cars and add them to a group
+        // Create a group for cars
         this.cars = this.add.group({
-            classType: Physics.Arcade.Sprite,
+            classType: Car,
             maxSize: 10,
             runChildUpdate: true,
         });
@@ -56,61 +53,114 @@ export class GameLogic extends Scene {
     }
 
     update() {
-        // Handle frog tile-based movement
         if (!this.isMoving) {
-            if (this.cursors.left.isDown) {
-                this.moveFrog(-this.tileSize, 0); // Move left by one tile
+            if (this.cursors.up.isDown) {
+                this.moveFrog(0, -this.tileSize, 'frog_hop_up', 'frog_idle_up');
             } else if (this.cursors.right.isDown) {
-                this.moveFrog(this.tileSize, 0); // Move right by one tile
-            } else if (this.cursors.up.isDown) {
-                this.moveFrog(0, -this.tileSize); // Move up by one tile
+                this.moveFrog(this.tileSize, 0, 'frog_hop_right', 'frog_idle_right');
             } else if (this.cursors.down.isDown) {
-                this.moveFrog(0, this.tileSize); // Move down by one tile
+                this.moveFrog(0, this.tileSize, 'frog_hop_down', 'frog_idle_down');
+            } else if (this.cursors.left.isDown) {
+                this.moveFrog(-this.tileSize, 0, 'frog_hop_left', 'frog_idle_left');
             }
         }
-
-        // Update car movements
-        this.cars.children.iterate((car: Physics.Arcade.Sprite) => {
-            if (car.x < 0 || car.x > this.cameras.main.width) {
-                car.setActive(false).setVisible(false); // Hide cars that go off-screen
-            }
-        });
 
         // Handle collisions between frog and cars
         this.physics.world.collide(this.frog, this.cars, this.gameOver, null, this);
     }
 
-    moveFrog(deltaX: number, deltaY: number) {
-        // Ensure only one move at a time
+    moveFrog(deltaX: number, deltaY: number, hopAnimationKey: string, idleAnimationKey: string) {
         this.isMoving = true;
 
-        // Calculate the target position
         const targetX = this.frog.x + deltaX;
         const targetY = this.frog.y + deltaY;
+
+        // Play the hop animation
+        this.frog.anims.play(hopAnimationKey, true);
 
         // Tween the frog to the target position
         this.tweens.add({
             targets: this.frog,
             x: targetX,
             y: targetY,
-            duration: 200, // Movement duration in milliseconds
+            duration: 200,
             onComplete: () => {
-                this.isMoving = false; // Allow further movement after tween is complete
+                this.isMoving = false;
+                this.frog.anims.play(idleAnimationKey, true); // Switch back to idle animation
             },
         });
     }
 
+    createFrogAnimations() {
+        // Idle animations
+        this.anims.create({
+            key: 'frog_idle_up',
+            frames: [{ key: 'frog', frame: 0 }],
+            frameRate: 1,
+        });
+
+        this.anims.create({
+            key: 'frog_idle_right',
+            frames: [{ key: 'frog', frame: 2 }],
+            frameRate: 1,
+        });
+
+        this.anims.create({
+            key: 'frog_idle_down',
+            frames: [{ key: 'frog', frame: 4 }],
+            frameRate: 1,
+        });
+
+        this.anims.create({
+            key: 'frog_idle_left',
+            frames: [{ key: 'frog', frame: 6 }],
+            frameRate: 1,
+        });
+
+        // Hop animations
+        this.anims.create({
+            key: 'frog_hop_up',
+            frames: this.anims.generateFrameNumbers('frog', { start: 0, end: 1 }),
+            frameRate: 10,
+        });
+
+        this.anims.create({
+            key: 'frog_hop_right',
+            frames: this.anims.generateFrameNumbers('frog', { start: 2, end: 3 }),
+            frameRate: 10,
+        });
+
+        this.anims.create({
+            key: 'frog_hop_down',
+            frames: this.anims.generateFrameNumbers('frog', { start: 4, end: 5 }),
+            frameRate: 10,
+        });
+
+        this.anims.create({
+            key: 'frog_hop_left',
+            frames: this.anims.generateFrameNumbers('frog', { start: 6, end: 7 }),
+            frameRate: 10,
+        });
+    }
+
     createCars() {
-        // Add cars moving from right to left
-        const car = this.physics.add.sprite(this.cameras.main.width, PhaserMath.Between(50, this.cameras.main.height - 50), 'car');
-        car.setOrigin(0.5, 0.5);
-        car.setScale(0.5);
-        car.setVelocityX(-this.carSpeed);
+        // Spawn cars closer to the frog's starting position
+        const minY = this.cameras.main.height - 200; // Lower limit closer to the frog
+        const maxY = this.cameras.main.height - 50; // Upper limit closer to the frog
+        const y = PhaserMath.Between(minY, maxY);
+
+        // Randomize speed and direction
+        const speed = PhaserMath.Between(50, this.carSpeed);
+        const direction = PhaserMath.Between(0, 1) === 0 ? -1 : 1;
+
+        // Create a new car
+        const car = new Car(this, direction === 1 ? -50 : this.cameras.main.width + 50, y, 'car', speed, direction);
+        car.setScale(0.5); // Optional scaling
         this.cars.add(car);
     }
 
     gameOver() {
-        // Handle game over logic
-        this.scene.restart(); // Restart the scene when the frog collides with a car
+        // Restart the scene when the frog collides with a car
+        this.scene.restart();
     }
 }

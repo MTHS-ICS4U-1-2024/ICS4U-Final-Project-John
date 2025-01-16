@@ -4,6 +4,7 @@ export class MainMenu extends Scene {
     background: GameObjects.Image;
     logo: GameObjects.Image;
     title: GameObjects.Text;
+    titleBackground: GameObjects.Rectangle;
 
     constructor() {
         super('MainMenu');
@@ -18,17 +19,27 @@ export class MainMenu extends Scene {
 
         // Set up the logo image
         this.logo = this.add.image(width / 2, height * 0.3, 'logo'); // Position logo at 30% of height
-        this.logo.setDisplaySize(width * 0.6, height * 0.2); // Scale logo proportionally
+        this.logo.setDisplaySize(width * 0.65, width * 0.5); // Set the logo size to 50% of the game width
+        // Remove scaling to show the logo at full size
+        this.logo.setOrigin(0.5);  // Center the logo
 
         // Set up the title text
         this.title = this.add.text(width / 2, height * 0.7, 'Press Space to Play', {
             fontFamily: 'Arial Black',
-            fontSize: `${Math.round(height * 0.05)}px`, // Font size as 5% of game height
+            fontSize: `${Math.round(height * 0.04)}px`, // Smaller font size as 4% of game height
             color: '#ffffff',
             stroke: '#000000',
-            strokeThickness: Math.round(height * 0.005), // Stroke thickness as 0.5% of height
+            strokeThickness: Math.round(height * 0.003), // Thinner stroke thickness
             align: 'center',
         }).setOrigin(0.5);
+
+        // Create a background for the title with rounded corners
+        this.titleBackground = this.add.rectangle(
+            width / 2, height * 0.7, // Position at the same place as the title text
+            this.title.width + 40, this.title.height + 20, // Make the rectangle larger than the text
+            20, // Corner radius for rounded corners
+            0x000000 // Black background color
+        ).setOrigin(0.5).setAlpha(0.7); // Set background alpha for transparency
 
         // Apply Ken Burns effect (zooming in and out)
         this.tweens.add({

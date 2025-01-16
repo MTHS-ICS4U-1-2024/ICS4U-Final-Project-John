@@ -103,7 +103,8 @@ export class Hud extends Scene {
             this.livesText.setText(`Lives: ${this.lives}`);
 
             if (this.lives <= 0) {
-                this.scene.start('GameOver', { score: this.score }); // End the game
+                // End the game if no lives are left
+                this.scene.start('GameOver', { score: this.score }); // Transition to GameOver
             }
         }
     }
@@ -115,6 +116,18 @@ export class Hud extends Scene {
         this.timeRemaining = this.timeLimit; // Reset time remaining
         this.scoreText.setText(`Score: ${this.score}`);
         this.livesText.setText(`Lives: ${this.lives}`);
-        this.timer.reset({ delay: 1000, callback: this.updateTime, callbackScope: this, loop: true });
+        this.timeText.setText(`Time: ${this.timeRemaining}`);
+        
+        // Reset the timer (making sure it doesn't continue after a reset)
+        if (this.timer) {
+            this.timer.remove();
+        }
+        
+        this.timer = this.time.addEvent({
+            delay: 1000,
+            callback: this.updateTime,
+            callbackScope: this,
+            loop: true,
+        });
     }
 }

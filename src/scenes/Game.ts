@@ -4,7 +4,7 @@ import { Car } from './Car';
 import { Frog } from './Frog';
 
 export class Game extends Scene {
-    private frog: Frog; // Using the Frog class
+    private frog: Frog;
     private score: number;
     private cars: Phaser.GameObjects.Group;
     private gameOver: boolean;
@@ -97,20 +97,27 @@ export class Game extends Scene {
             this.scene.start('GameOver', { score: this.score, lives: this.lives });
         }
     }
-
+    
     private spawnCars() {
-        for (let i = 0; i < 5; i++) {
-            const speed = Phaser.Math.Between(2, 5); // Randomize speed
+        const yPositions = [200, 300, 400, 500]; // Lane Y positions, but we'll adjust the cars' y position directly
+    
+        // Loop through each row (yPosition)
+        for (let i = 0; i < yPositions.length; i++) {
+            // Randomize the speed and direction for the row
+            const speed = Phaser.Math.Between(2, 5); // Randomize speed once for the row
             const direction = Phaser.Math.Between(0, 1) === 0 ? 1 : -1; // Randomize direction
-            const car = new Car(
-                this,
-                direction === 1 ? -50 : this.cameras.main.width + 50, // Start off-screen
-                100 + i * 100, // Staggered vertical positions
-                'car', // Texture key
-                speed,
-                direction
-            );
-            this.cars.add(car);
+    
+            // Use the Car.spawnRow method to create cars on this row
+            const rowCars = Car.spawnRow(this, yPositions[i], Phaser.Math.Between(1, 3)); // Spawn 1-3 cars
+    
+            // For all the cars in the row, set the speed and direction (inherited from the first car)
+            rowCars.forEach(car => {
+                car.speed = speed;
+                car.direction = direction;
+                car.y = this.cameras.main.height - yPositions[i]; // Place cars at the bottom (near the bottom of the screen)
+                this.cars.add(car); // Add each car to the group
+            });
         }
     }
+    
 }
