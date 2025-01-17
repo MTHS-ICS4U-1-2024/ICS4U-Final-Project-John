@@ -6,15 +6,23 @@ export class GameLogic extends Scene {
     private cars: Phaser.GameObjects.Group;
     private cursors: Types.Input.Keyboard.CursorKeys;
     private gameboard: Phaser.GameObjects.TileSprite;
-    private carSpeed: number = 100; // Adjust car speed
     private isMoving: boolean = false; // Prevent multiple moves at once
-    private tileSize: number = 50; // Size of each tile for movement
+    private tileSize: number = 100; // Size of each tile for row-based movement
+
+    // Define custom world bounds (example)
+    private worldBounds: Phaser.Geom.Rectangle;
 
     constructor() {
         super('GameLogic');
     }
 
     create() {
+        // Define the world bounds (you can adjust these values as needed)
+        this.worldBounds = new Phaser.Geom.Rectangle(0, 0, this.cameras.main.width, this.cameras.main.height);
+        
+        // Set the world bounds for the game scene
+        this.physics.world.bounds = this.worldBounds;
+
         // Add the gameboard as the background
         this.gameboard = this.add.tileSprite(0, 0, this.cameras.main.width, this.cameras.main.height, 'gameboard');
         this.gameboard.setOrigin(0, 0);
@@ -67,6 +75,13 @@ export class GameLogic extends Scene {
 
         // Handle collisions between frog and cars
         this.physics.world.collide(this.frog, this.cars, this.gameOver, null, this);
+
+        // Keep the frog within the defined world bounds (this also avoids the frog from going off-screen)
+        this.frog.setCollideWorldBounds(true);
+        if (!this.worldBounds.contains(this.frog.x, this.frog.y)) {
+            // Optionally, reset frog's position if it goes outside the world bounds
+            this.frog.setPosition(this.cameras.main.centerX, this.cameras.main.height - 100);
+        }
     }
 
     moveFrog(deltaX: number, deltaY: number, hopAnimationKey: string, idleAnimationKey: string) {
@@ -101,7 +116,7 @@ export class GameLogic extends Scene {
 
         this.anims.create({
             key: 'frog_idle_right',
-            frames: [{ key: 'frog', frame: 2 }],
+            frames: [{ key: 'frog', frame: 4 }],
             frameRate: 1,
         });
 
@@ -143,22 +158,7 @@ export class GameLogic extends Scene {
         });
     }
 
-    createCars() {
-        // Spawn cars closer to the frog's starting position
-        const minY = this.cameras.main.height - 200; // Lower limit closer to the frog
-        const maxY = this.cameras.main.height - 50; // Upper limit closer to the frog
-        const y = PhaserMath.Between(minY, maxY);
-
-        // Randomize speed and direction
-        const speed = PhaserMath.Between(50, this.carSpeed);
-        const direction = PhaserMath.Between(0, 1) === 0 ? -1 : 1;
-
-        // Create a new car
-        const car = new Car(this, direction === 1 ? -50 : this.cameras.main.width + 50, y, 'car', speed, direction);
-        car.setScale(0.5); // Optional scaling
-        this.cars.add(car);
-    }
-
+    
     gameOver() {
         // Restart the scene when the frog collides with a car
         this.scene.restart();

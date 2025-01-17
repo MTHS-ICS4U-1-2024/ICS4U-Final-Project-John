@@ -15,13 +15,10 @@ export class GameOver extends Scene {
     }
 
     create() {
-        // Make the background transparent (no background added)
-        this.cameras.main.setBackgroundColor(0x000000, true); // Set transparent background
+        // Set background color to black
+        this.cameras.main.setBackgroundColor(0x000000);
 
-        // Pause the game when GameOver screen is shown
-        this.scene.pause('Game');  // Assuming 'Game' is the main game scene you want to pause
-
-        // Display game over text
+        // Display "Game Over" text
         this.add.text(this.cameras.main.centerX, this.cameras.main.centerY - 100, 'Game Over', {
             fontFamily: 'Arial',
             fontSize: '64px',
@@ -53,12 +50,14 @@ export class GameOver extends Scene {
 
         // Listen for the space key to restart the game
         this.input.keyboard.on('keydown-SPACE', () => {
-            this.scene.start('MainMenu');  // Switch to the main menu (or whatever scene you want)
+            // Restart the Game scene and reset the state
+            this.scene.stop('Game'); // Stop the current game instance
+            this.scene.start('Game'); // Start a new game instance
         });
     }
 
-    // Ensures the game is paused and transparent background is set
     shutdown() {
-        this.scene.resume('Game'); // Resume the 'Game' scene when the GameOver scene is shut down
+        // Resume the Game scene if needed
+        this.scene.resume('Game');
     }
 }

@@ -5,72 +5,93 @@ export class Hud extends Scene {
     private scoreText: Phaser.GameObjects.Text;
     private lives: number;
     private livesText: Phaser.GameObjects.Text;
-    private timer: Phaser.Time.TimerEvent;
+    private timeRemaining: number; // Remaining time
     private timeText: Phaser.GameObjects.Text;
 
-    private timeLimit: number = 60; // Time limit in seconds
-    private timeRemaining: number; // Remaining time
+    private readonly timeLimit: number = 30; // Time limit in seconds
+    private timerEvent: Phaser.Time.TimerEvent;
 
     constructor() {
         super('Hud');
     }
 
     create() {
-        // Initialize HUD elements
+        // Initialize HUD values
         this.score = 0;
-        this.lives = 3; // Start with 3 lives
-        this.timeRemaining = this.timeLimit; // Start with 60 seconds
+        this.lives = 3;
+        this.timeRemaining = this.timeLimit;
 
-        // Display score with bubble effect
+        // Create score text
         this.scoreText = this.add.text(16, 16, `Score: ${this.score}`, {
             fontFamily: 'Arial Black',
             fontSize: '32px',
-            color: '#ffffff', // Base color
-            stroke: '#000000', // Outline color
-            strokeThickness: 8, // Outline thickness
-            shadow: {
-                offsetX: 4, // Horizontal shadow offset
-                offsetY: 4, // Vertical shadow offset
-                color: '#333333', // Shadow color
-                blur: 8, // Shadow blur radius
-                fill: true, // Apply shadow to the text fill
-            },
-        }).setOrigin(0, 0);
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 8,
+        });
 
-        // Display lives with bubble effect
+        // Create lives text
         this.livesText = this.add.text(16, 64, `Lives: ${this.lives}`, {
             fontFamily: 'Arial Black',
             fontSize: '32px',
             color: '#ffffff',
             stroke: '#000000',
             strokeThickness: 8,
-            shadow: {
-                offsetX: 4,
-                offsetY: 4,
-                color: '#333333',
-                blur: 8,
-                fill: true,
-            },
-        }).setOrigin(0, 0);
+        });
 
-        // Display timer with bubble effect
+        // Create timer text
         this.timeText = this.add.text(this.cameras.main.width - 180, 16, `Time: ${this.timeRemaining}`, {
             fontFamily: 'Arial Black',
             fontSize: '32px',
             color: '#ffffff',
             stroke: '#000000',
             strokeThickness: 8,
-            shadow: {
-                offsetX: 4,
-                offsetY: 4,
-                color: '#333333',
-                blur: 8,
-                fill: true,
-            },
-        }).setOrigin(0, 0);
+        });
 
-        // Set up a timer for the countdown
-        this.timer = this.time.addEvent({
+        // Start the timer event
+        this.startTimer();
+    }
+
+    // Update score display
+    updateScore(newScore: number) {
+        this.score = newScore;
+        this.scoreText.setText(`Score: ${this.score}`);
+    }
+
+    // Update lives display
+    updateLives(newLives: number) {
+        this.lives = newLives;
+        this.livesText.setText(`Lives: ${this.lives}`);
+    }
+
+    // Timer countdown logic
+    private updateTime() {
+        this.timeRemaining--;
+
+        // Update the timer display
+        this.timeText.setText(`Time: ${this.timeRemaining < 10 ? '0' + this.timeRemaining : this.timeRemaining}`);
+
+        // Handle timer reaching 0
+        if (this.timeRemaining <= 0) {
+            this.timeRemaining = this.timeLimit; // Reset time
+            this.lives--; // Deduct a life
+            this.updateLives(this.lives);
+
+            // If no lives are left, stop the timer and go to GameOver
+            if (this.lives <= 0) {
+                this.timerEvent.remove(); // Stop the timer
+                this.scene.start('GameOver', { score: this.score }); // Transition to GameOver scene
+            }
+        }
+    }
+
+    // Start the timer
+    private startTimer() {
+        if (this.timerEvent) {
+            this.timerEvent.remove(); // Ensure no duplicate timers
+        }
+
+        this.timerEvent = this.time.addEvent({
             delay: 1000, // Timer updates every 1 second
             callback: this.updateTime,
             callbackScope: this,
@@ -78,56 +99,16 @@ export class Hud extends Scene {
         });
     }
 
-    // Update score method
-    updateScore(newScore: number) {
-        this.score = newScore;
-        this.scoreText.setText(`Score: ${this.score}`);
-    }
-
-    // Update lives method
-    updateLives(newLives: number) {
-        this.lives = newLives;
-        this.livesText.setText(`Lives: ${this.lives}`);
-    }
-
-    // Timer countdown method
-    private updateTime() {
-        this.timeRemaining--; // Decrease the remaining time by 1 second
-
-        // Update the time display
-        this.timeText.setText(`Time: ${this.timeRemaining < 10 ? '0' + this.timeRemaining : this.timeRemaining}`);
-
-        if (this.timeRemaining <= 0) {
-            this.timeRemaining = this.timeLimit; // Reset to the time limit
-            this.lives--; // Deduct a life
-            this.livesText.setText(`Lives: ${this.lives}`);
-
-            if (this.lives <= 0) {
-                // End the game if no lives are left
-                this.scene.start('GameOver', { score: this.score }); // Transition to GameOver
-            }
-        }
-    }
-
     // Reset HUD for a new game or level
     resetHud() {
         this.score = 0;
         this.lives = 3;
-        this.timeRemaining = this.timeLimit; // Reset time remaining
-        this.scoreText.setText(`Score: ${this.score}`);
-        this.livesText.setText(`Lives: ${this.lives}`);
+        this.timeRemaining = this.timeLimit;
+
+        this.updateScore(this.score);
+        this.updateLives(this.lives);
         this.timeText.setText(`Time: ${this.timeRemaining}`);
-        
-        // Reset the timer (making sure it doesn't continue after a reset)
-        if (this.timer) {
-            this.timer.remove();
-        }
-        
-        this.timer = this.time.addEvent({
-            delay: 1000,
-            callback: this.updateTime,
-            callbackScope: this,
-            loop: true,
-        });
+
+        this.startTimer(); // Restart the timer
     }
 }
