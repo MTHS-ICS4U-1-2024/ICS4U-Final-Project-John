@@ -1,8 +1,8 @@
 import { enemyType, row, TilePosition, directionEnum, GameSprite } from '../game.interfaces'
 import { Enemy } from './Enemy';
 import { scene } from '../App';
-import { Utils } from '../scenes/Utils/utils';
-import * as consts from "../scenes/Utils/consts"
+import { Utils } from '../ts/Utils/utils';
+import * as consts from "../ts/Utils/consts"
 
 export class Car extends Enemy{
     private row: number

@@ -1,6 +1,6 @@
 import { enemyType, TilePosition, directionEnum, GameSprite } from '../game.interfaces'
-import { Utils } from '../scenes/Utils/utils'
-import * as consts from "../scenes/Utils/consts"
+import { Utils } from '../ts/Utils/utils'
+import * as consts from "../ts/Utils/consts"
 import { Car } from './Car'
 import { scene, enemyHandler } from '../App'
 
