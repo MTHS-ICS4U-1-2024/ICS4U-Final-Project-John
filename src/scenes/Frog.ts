@@ -1,85 +1,166 @@
-import { Scene } from 'phaser';
+import * as consts from "./Utils/consts"
+import { Utils } from "./Utils/utils"
+import { directionEnum, Position, TilePosition } from "./game.interfaces"
+import { map, scene } from "./App";
+import { Tile } from "./Tile";
+
+let gem
 
 export class Frog extends Phaser.GameObjects.Sprite {
-    private cursors: Phaser.Types.Input.Keyboard.CursorKeys; // For handling input
-    private isMoving: boolean; // Flag to ensure single movement per key press
-    private rowHeight: number = 100; // Height of each lane/row (adjust as needed)
 
-    // Define goal areas as an array of objects with x and y positions
-    private goalAreas: { x: number, y: number }[] = [
-        { x: 55, y: 175 },
-        { x: 255, y: 175 },
-        { x: 462, y: 175 },
-        { x: 665, y: 175 },
-        { x: 868, y: 175 }
-    ];
+    private currentDirection: directionEnum
+    private currentAnimationFrame: number
+    private isDying = false
+    public isPlatform = false
+    public idOfTouchingTurtle = null
 
-    constructor(scene: Scene, x: number, y: number, texture: string) {
-        super(scene, x, y, texture);
+    body!: Phaser.Physics.Arcade.Body
 
-        // Add the frog to the scene
-        scene.add.existing(this);
+    constructor(config) {
+        super( scene, config.x, config.y, "frog");
+        
         scene.physics.add.existing(this);
+        scene.physics.world.enable(this);
+        scene.add.existing(this).setDepth(1).setOrigin( 0,0 )
 
-        // Set up input keys
-        this.cursors = scene.input.keyboard.createCursorKeys();
+        scene.physics.world.enable(this);
+        scene.add.existing(this);
+        this.body.setSize(40,40,true)
 
-        // Initialize movement flag
-        this.isMoving = false;
+        this.currentDirection = directionEnum.NORTH
+        this.death = this.death.bind(this)
+        this.currentAnimationFrame = 0
 
-        // Set origin and scale, if needed
-        this.setOrigin(0.5);
+
+        scene.anims.create({
+            key: 'deathAnimation',
+            frames: scene.anims.generateFrameNumbers('death', { end: 2 } ),
+            frameRate: 5,
+            repeat: 1
+        });
+
+
     }
 
-    update() {
-        // Handle movement, ensuring one movement per key press
-        if (!this.isMoving) {
-            if (this.cursors.up.isDown) {
-                this.isMoving = true;
-                this.y -= this.rowHeight; // Move up one row
-            } else if (this.cursors.down.isDown) {
-                this.isMoving = true;
-                this.y += this.rowHeight; // Move down one row
-            } else if (this.cursors.left.isDown) {
-                this.isMoving = true;
-                this.x -= this.rowHeight; // Move left one lane (same width as row height)
-            } else if (this.cursors.right.isDown) {
-                this.isMoving = true;
-                this.x += this.rowHeight; // Move right one lane (same width as row height)
+    public getCurrentPosition(): Position {
+        return {
+            x: this.x,
+            y: this.y
+        }
+    }
+
+    public getCurrentTilePosition(): TilePosition{
+        return Utils.convertPositionToTile( this.getCurrentPosition() ) 
+    }
+
+    public getCurrentTile(): Tile {
+        let tilePosition = Utils.convertPositionToTile( this.getCurrentPosition() ) 
+        return map.getTile( tilePosition )
+    }
+
+    private isRiver(){
+        return ( this.y >= consts.BACKGROUND.RIVER_TOP_HEIGHT && this.y <= consts.BACKGROUND.RIVER_BOTTOM_HEIGHT )
+    }
+
+    private isGoalPosition(){
+
+        return Utils.convertPositionToTile( this.getCurrentPosition() ).tileY <= 0
+    }
+
+    private setDirection(dir: directionEnum){
+        this.currentDirection = dir
+    }
+    
+    public update(){
+        this.boundaries() 
+
+        if( this.body.embedded ) 
+            this.isPlatform = true
+        else{
+            this.idOfTouchingTurtle = null
+            this.isPlatform = false
+        }
+
+    }
+
+    private boundaries(){
+        if( this.x <= 0 || this.x > Utils.halfScreen( 'x', true ) ){
+            scene.kill( 'limit of screen' )
+        }
+        
+        if( this.isRiver() && !this.isPlatform ){
+            scene.kill( 'drowning' )
+        }
+
+        if( this.isGoalPosition() )
+            scene.kill( 'limit top position' )
+
+    }
+
+    public move( direction: directionEnum ){
+        
+        if( !this.isDying ){
+
+            let tilePosition = Utils.convertPositionToTile({ x: this.x, y: this.y })
+            this.setDirection( direction )
+            
+            switch( direction ){
+                case directionEnum.EAST:
+                    tilePosition.tileX++
+                    this.currentAnimationFrame = 7
+                    this.x += consts.TILE_SIZE
+                break;
+                case directionEnum.WEST:
+                    tilePosition.tileX--
+                    this.currentAnimationFrame = 5
+                    this.x -= consts.TILE_SIZE
+                break;
+                case directionEnum.SOUTH:
+                    tilePosition.tileY++
+                    this.currentAnimationFrame = 3
+                    this.y += consts.TILE_SIZE
+                    break;
+                case directionEnum.NORTH:
+                    tilePosition.tileY--
+                    this.currentAnimationFrame = 1
+                    this.y -= consts.TILE_SIZE
+                    scene.updateScore( 10 )
+                break;
             }
+    
+            this.setTexture('frog', this.currentAnimationFrame )
+            
+            scene.time.delayedCall(consts.FROG.MOVEMENT_ANIM_TIMER, () => {
+                this.setTexture('frog', --this.currentAnimationFrame)
+            }, [], this);
+        } 
+
+    }
+
+    public resetToStartPosition(){
+        let { x, y } = Utils.convertTileToPosition( consts.FROG.INITIAL_TILE_POSITION )
+        this.setPosition( x, y )
+        this.setDirection( directionEnum.NORTH )
+        this.setTexture("frog", 0)
+    }
+
+    public death( callback ) {
+
+        if( !this.isDying ){
+            
+            this.play('deathAnimation');
+            this.isDying = true
+
+            this.once('animationcomplete', () => {
+
+                this.resetToStartPosition()
+                callback()
+                this.isDying = false
+    
+            })
+
         }
 
-        // Reset movement flag when no keys are pressed
-        if (
-            Phaser.Input.Keyboard.JustUp(this.cursors.up) ||
-            Phaser.Input.Keyboard.JustUp(this.cursors.down) ||
-            Phaser.Input.Keyboard.JustUp(this.cursors.left) ||
-            Phaser.Input.Keyboard.JustUp(this.cursors.right)
-        ) {
-            this.isMoving = false;
-        }
 
-        // Handle boundaries
-        this.checkBoundaries();
-    }
-
-    private checkBoundaries() {
-        // Keep the frog within the scene boundaries
-        const { width, height } = this.scene.cameras.main;
-        this.x = Phaser.Math.Clamp(this.x, 0, width);
-        this.y = Phaser.Math.Clamp(this.y, 0, height - this.rowHeight); // Prevent going off the top
-    }
-
-    hasReachedGoal(): boolean {
-        // Check if the frog is within any of the defined goal areas
-        return this.goalAreas.some(goal => 
-            this.x >= goal.x && this.x <= goal.x + 40 && // Check if the frog's x is within the goal's bounds
-            this.y >= goal.y && this.y <= goal.y + 100 // Check if the frog's y is within the goal's bounds
-        );
-    }
-
-    resetPosition() {
-        // Reset the frog's position to the starting point
-        this.setPosition(this.scene.cameras.main.centerX, this.scene.cameras.main.height - this.rowHeight);
     }
 }

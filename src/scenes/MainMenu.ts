@@ -20,7 +20,6 @@ export class MainMenu extends Scene {
         // Set up the logo image
         this.logo = this.add.image(width / 2, height * 0.3, 'logo'); // Position logo at 30% of height
         this.logo.setDisplaySize(width * 0.65, width * 0.5); // Set the logo size to 50% of the game width
-        // Remove scaling to show the logo at full size
         this.logo.setOrigin(0.5);  // Center the logo
 
         // Set up the title text
@@ -52,9 +51,13 @@ export class MainMenu extends Scene {
             ease: 'Sine.easeInOut', // Smooth easing for the zoom effect
         });
 
-        // Add a keyboard input event to change the scene when the spacebar is pressed
+        // Add a keyboard input event to start the game when the spacebar is pressed
         this.input.keyboard.on('keydown-SPACE', () => {
             console.log('Switching to Game scene...');
+            
+            // Stop the MainMenu scene (to reset state)
+            this.scene.stop('MainMenu');
+            // Start the Game scene
             this.scene.start('Game');
         });
     }

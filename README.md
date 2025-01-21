@@ -1,164 +1,82 @@
-# Phaser Rollup TypeScript Template
+# Frogger-Game
+Classic Frogger game using javascript and typescript
 
-This is a Phaser 3 project template that uses Rollup for bundling. It supports hot-reloading for quick development workflow, inclues TypeScript support and scripts to generate production-ready builds.
-
-**[This Template is also available as a JavaScript version.](https://github.com/phaserjs/template-rollup)**
-
-### Versions
-
-This template has been updated for:
-
-- [Phaser 3.87.0](https://github.com/phaserjs/phaser)
-- [Rollup 4.17.2](https://github.com/rollup/rollup)
-- [TypeScript 5.4.5](https://github.com/microsoft/TypeScript)
-
-![screenshot](screenshot.png)
-
-## Requirements
-
-[Node.js](https://nodejs.org) is required to install dependencies and run scripts via `npm`.
-
-## Available Commands
-
-| Command | Description |
-|---------|-------------|
-| `npm install` | Install project dependencies |
-| `npm run dev` | Launch a development web server |
-| `npm run build` | Create a production build in the `dist` folder |
-| `npm run dev-nolog` | Launch a development web server without sending anonymous data (see "About log.js" below) |
-| `npm run build-nolog` | Create a production build in the `dist` folder without sending anonymous data (see "About log.js" below) |
-
-
-## Writing Code
-
-After cloning the repo, run `npm install` from your project directory. Then, you can start the local development server by running `npm run dev`.
-
-The local development server runs on `http://localhost:8080` by default. Please see the Rollup documentation if you wish to change this, or add SSL support.
-
-Once the server is running you can edit any of the files in the `src` folder. Rollup will automatically recompile your code and then reload the browser.
-
-## Template Project Structure
-
-We have provided a default project structure to get you started. This is as follows:
-
-- `index.html` - A basic HTML page to contain the game.
-- `src` - Contains the game source code.
-- `src/main.ts` - The main entry point. This contains the game configuration and starts the game.
-- `src/global.d.ts` - Global TypeScript declarations, provide types information.
-- `src/scenes/` - The Phaser Scenes are in this folder.
-- `public/style.css` - Some simple CSS rules to help with page layout.
-- `public/assets` - Contains the static assets used by the game.
-
-## Handling Assets
-
-Rollup supports loading assets via JavaScript module `import` statements.
-
-This template provides support for both embedding assets and also loading them from a static folder. To embed an asset, you can import it at the top of the JavaScript file you are using it in:
-
-```js
-import logoImg from './assets/logo.png'
+---------------------------------------------------------------
+# How to Deploy
+On the project terminal run: 
 ```
-
-To load static files such as audio files, videos, etc place them into the `public/assets` folder. Then you can use this path in the Loader calls within Phaser:
-
-```js
-preload ()
-{
-    //  This is an example of an imported bundled image.
-    //  Remember to import it at the top of this file
-    this.load.image('logo', logoImg);
-
-    //  This is an example of loading a static image
-    //  from the public/assets folder:
-    this.load.image('background', 'assets/bg.png');
-}
+npm i;
+npm run build;
+node index
 ```
+then access on your browser to: localhost:8080
 
-When you issue the `npm run build` command, all static assets are automatically copied to the `dist/assets` folder.
+To access a live version running on a server ( the server may take a few seconds to boot, before starting the game )
 
-## Deploying to Production
+-> https://frogger1991.onrender.com/ <-
+( also, it's a slow server )
 
-After you run the `npm run build` command, your code will be built into a single bundle and saved to the `dist` folder, along with any other assets your project imported, or stored in the public assets folder.
+# Structure
+Created 4 main Classes:
+### Map ###
+The map works as a 2D array of the class Tile. This class is the main structure of the map and is where the Player moves around. The map is the base to understand if the player can move between tiles
 
-In order to deploy your game, you will need to upload *all* of the contents of the `dist` folder to a public facing web server.
+### Tile ###
+The tile is the representation of a slot in the map matrix, returns position or TilePosition ( x: 5, y: 1 )
 
-## Customizing the Template
+### Player ###
+The player is a simple Phaser.Sprite class that moves around with increment/decrement of 60px for the X and Y axis.
+When the player detects a collision with the Car class, triggers the kill function that animates the frog death animation, resets his position the starting position and decrements 1 life
+When the player detects a collision with the Platform and Turtle class, sets his speed equals to the Platform or Turtle speed. If the player reaches the boundary of the map dies.
 
-### Babel
+### Enemy ###
+Made an abstract class for the Enemies that extends Phaser.Sprite and got as an inheritance the class Platform and Car. The Enemy is responsible for the movement, the boundaries, deletion and communication with the class EnemyHandler
+**Platform**
+The Platform instances move from left to right at different speeds, these speeds are declared in an array that differs depending on the left. His getSpeed method is public, so it can set the speed of the frog when it's above the platform
+**Turtle**
+The Turt is similar to the Platform class but got a small loop animation for the movement and has a probability of diving back into the water for X seconds and coming back again
 
-You can write modern ES6+ JavaScript and Babel will transpile it to a version of JavaScript that you want your project to support. The targeted browsers are set in the `.babelrc` file and the default currently targets all browsers with total usage over "0.25%" but excludes IE11 and Opera Mini.
+**Car**
+The car class represents 5 types of images, where 4 images share the same sprite sheet and 1 single image for the bus. The speed of each car is mapped in an array of numbers, depending on the position of the tracks and the level that player is in.
 
- ```
-"browsers": [
-  ">0.25%",
-  "not ie 11",
-  "not op_mini all"
-]
- ```
+### Enemy Handler ###
+The Enemy Handler takes care of the creation of each enemy, what speed should have or what direction to take. It keeps track of the arrays of each enemy, when to push a new Enemy or delete an outdated one. 
+The class controls how many enemies should be on the map and balances it between the new ones and the old ones. For each track exists a timer for spawning new cars, this timer can get a value between 500ms and 1500ms, this way is possible to make a more improvised scenario for the player to move around
+When the game starts over, the enemy handler is responsible for clearing every enemy in the game and spawning new ones.
 
-### Rollup
 
-If you want to customize your build, such as adding plugin (i.e. for loading CSS or fonts), you can modify the `rollup/rollup.config.*.mjs` file for cross-project changes, or you can modify and/or create new configuration files and target them in specific npm tasks inside of `package.json`. Please see the [Rollup documentation](https://rollupjs.org/) for more information.
+---------------------------------------------------------------
+# Development
+Started by developing the Map, Player and Tile class and created a relation between them, where the map contains the structure of Tiles where the Frog ( Player ) will be able to move around or predict enemies, platforms or walls.
 
-## About log.js
+**Enemies & generation** 
+After, I started to create the Enemy, Car and EnemyHandler class. I began by setting the Car on the map, by creating it via EnemyHandler, giving him movement and reacting to the boundaries of the map.
+Having that done, I focused on drawing the different cars in the different tracks, as well, as giving them different speeds depending on their position
 
-If you inspect our node scripts you will see there is a file called `log.js`. This file makes a single silent API call to a domain called `gryzor.co`. This domain is owned by Phaser Studio Inc. The domain name is a homage to one of our favorite retro games.
+**Deaths, GameOver & UI** 
+I started to focus on completing the game loop, since the starting point to the end of the game...So, setting variables of lives or timers, resetting the game when the frog loses one life or lose the game and making the GameOver screen. To give some context I started drawing the UI, icons and time bars, to better understand what's happening.
 
-We send the following 3 pieces of data to this API: The name of the template being used (vue, react, etc). If the build was 'dev' or 'prod' and finally the version of Phaser being used.
+**Platforms, Body Detection** 
+Made the platforms work with the frog interactions, then made the frog detect if it's located on the riverside of the map and if it's touching a platform. If not, then calls the kill method.
+Changed the frog movement from a grid-based move to an increment/decrement values on both axis, fixing the frog weird movement while above the Platforms or Turtle.
 
-At no point is any personal data collected or sent. We don't know about your project files, device, browser or anything else. Feel free to inspect the `log.js` file to confirm this.
+**Turtle & Goals**
+The toad class is pretty similar to the Platform one, with a small animation and probability of diving for X time under the water. The animation is a 3 frame loop, I made a sprite for a single Turtle and stick them together by code, this way I draw only a single sprite of a toad, instead of drawing the same sprite animation 2 or 3 times in the same image. The diving is based on a probability of 20% of the toads spawned and a randomized timer, between 2 seconds and 7 seconds, to play an animation of diving and floating back.
+Made the Goals small empty GameObjects, that when the Frog collides with them, they draw the Goal.png imagen and increments 1 of 5 goal points. When the player reaches the 5 points, the game resets the position, increments a level and the movements of the player and enemies increments, as well. Still deciding if I'm going to develop the new enemies for each level or leaving the game only with the incremental speed of the enemies for each level
 
-Why do we do this? Because being open source means we have no visible metrics about which of our templates are being used. We work hard to maintain a large and diverse set of templates for Phaser developers and this is our small anonymous way to determine if that work is actually paying off, or not. In short, it helps us ensure we're building the tools for you.
+**Lady Bug, Goal Insect**
+Added some bonus content to the game, started for spawning randomly a goal insect, temporarily, in one of the 5 goal positions and awarding 200 points if the Player caught it. Added the Lady bug 30% chance of spawning on the first Log of the map, where every 1 second, changed position.. If caught the Player is awarded 200 points. After finishing the bonus content I finally made the score system work properly, where each jump forward represents 10 points, reaching a goal 50 points and the previous scoring related to the bonus system.
+Left undone - For each level incremented the game should start spawning new enemies, like the snake or the crocodile
 
-However, if you don't want to send any data, you can use these commands instead:
 
-Dev:
 
-```bash
-npm run dev-nolog
-```
+---------------------------------------------------------------
+# Sketches & Evolution
 
-Build:
-
-```bash
-npm run build-nolog
-```
-
-Or, to disable the log entirely, simply delete the file `log.js` and remove the call to it in the `scripts` section of `package.json`:
-
-Before:
-
-```json
-"scripts": {
-    "dev": "node log.js dev & dev-template-script",
-    "build": "node log.js build & build-template-script"
-},
-```
-
-After:
-
-```json
-"scripts": {
-    "dev": "dev-template-script",
-    "build": "build-template-script"
-},
-```
-
-Either of these will stop `log.js` from running. If you do decide to do this, please could you at least join our Discord and tell us which template you're using! Or send us a quick email. Either will be super-helpful, thank you.
-
-## Join the Phaser Community!
-
-We love to see what developers like you create with Phaser! It really motivates us to keep improving. So please join our community and show-off your work 😄
-
-**Visit:** The [Phaser website](https://phaser.io) and follow on [Phaser Twitter](https://twitter.com/phaser_)<br />
-**Play:** Some of the amazing games [#madewithphaser](https://twitter.com/search?q=%23madewithphaser&src=typed_query&f=live)<br />
-**Learn:** [API Docs](https://newdocs.phaser.io), [Support Forum](https://phaser.discourse.group/) and [StackOverflow](https://stackoverflow.com/questions/tagged/phaser-framework)<br />
-**Discord:** Join us on [Discord](https://discord.gg/phaser)<br />
-**Code:** 2000+ [Examples](https://labs.phaser.io)<br />
-**Read:** The [Phaser World](https://phaser.io/community/newsletter) Newsletter<br />
-
-Created by [Phaser Studio](mailto:support@phaser.io). Powered by coffee, anime, pixels and love.
-
-The Phaser logo and characters are &copy; 2011 - 2024 Phaser Studio Inc.
-
-All rights reserved.
+ <p float="left">
+   <img width="186" height="260" src='https://github.com/AfonsoCFonseca/Frogger-Game/blob/master/screenshots/03_08.png'>
+   <img width="186" height="260" src='https://github.com/AfonsoCFonseca/Frogger-Game/blob/master/screenshots/09_08.png'>
+   <img width="186" height="260" src='https://github.com/AfonsoCFonseca/Frogger-Game/blob/master/screenshots/20_08.png'>
+   <img width="186" height="260" src='https://github.com/AfonsoCFonseca/Frogger-Game/blob/master/screenshots/09_09.png'>
+    <img width="186" height="260" src='https://github.com/AfonsoCFonseca/Frogger-Game/blob/master/screenshots/05_10.png'>
+ </p>

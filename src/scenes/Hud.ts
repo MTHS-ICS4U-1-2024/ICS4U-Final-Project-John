@@ -52,9 +52,20 @@ export class Hud extends Scene {
         this.startTimer();
     }
 
-    // Update score display
-    updateScore(newScore: number) {
-        this.score = newScore;
+    // Update score when rows are climbed
+    addRowScore(rowScore: number) {
+        this.score += rowScore; // Increment score by rowScore (e.g., 10 points)
+        this.updateScoreDisplay();
+    }
+
+    // Multiply score when a goal is reached
+    applyScoreMultiplier(multiplier: number) {
+        this.score *= multiplier; // Multiply score by the number of rows climbed
+        this.updateScoreDisplay();
+    }
+
+    // General method to update the score display
+    private updateScoreDisplay() {
         this.scoreText.setText(`Score: ${this.score}`);
     }
 
@@ -80,6 +91,7 @@ export class Hud extends Scene {
             // If no lives are left, stop the timer and go to GameOver
             if (this.lives <= 0) {
                 this.timerEvent.remove(); // Stop the timer
+                this.hideHud(); // Hide HUD elements
                 this.scene.start('GameOver', { score: this.score }); // Transition to GameOver scene
             }
         }
@@ -99,15 +111,27 @@ export class Hud extends Scene {
         });
     }
 
+    // Hide HUD elements when transitioning to GameOver
+    private hideHud() {
+        this.scoreText.setVisible(false);
+        this.livesText.setVisible(false);
+        this.timeText.setVisible(false);
+    }
+
     // Reset HUD for a new game or level
     resetHud() {
         this.score = 0;
         this.lives = 3;
         this.timeRemaining = this.timeLimit;
 
-        this.updateScore(this.score);
+        this.updateScoreDisplay();
         this.updateLives(this.lives);
         this.timeText.setText(`Time: ${this.timeRemaining}`);
+
+        // Make HUD visible again
+        this.scoreText.setVisible(true);
+        this.livesText.setVisible(true);
+        this.timeText.setVisible(true);
 
         this.startTimer(); // Restart the timer
     }

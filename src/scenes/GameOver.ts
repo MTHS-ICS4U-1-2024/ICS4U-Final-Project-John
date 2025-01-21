@@ -38,8 +38,8 @@ export class GameOver extends Scene {
             align: 'center',
         }).setOrigin(0.5);
 
-        // Instructions to restart the game
-        this.restartText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 100, 'Press SPACE to Restart', {
+        // Instructions to return to the main menu
+        this.restartText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 100, 'Press SPACE to Return to Main Menu', {
             fontFamily: 'Arial',
             fontSize: '32px',
             color: '#ffffff',
@@ -48,16 +48,19 @@ export class GameOver extends Scene {
             align: 'center',
         }).setOrigin(0.5);
 
-        // Listen for the space key to restart the game
+        // Listen for the space key to go back to the Main Menu
         this.input.keyboard.on('keydown-SPACE', () => {
-            // Restart the Game scene and reset the state
-            this.scene.stop('Game'); // Stop the current game instance
-            this.scene.start('Game'); // Start a new game instance
+            // Stop the current game and HUD scenes to reset the game state
+            this.scene.stop('Game'); // Stop the Game scene
+            this.scene.stop('Hud');  // Stop the HUD scene
+
+            // Start the MainMenu scene
+            this.scene.start('MainMenu');
         });
     }
 
     shutdown() {
-        // Resume the Game scene if needed
+        // Ensure the Game scene is resumed if needed
         this.scene.resume('Game');
     }
 }
