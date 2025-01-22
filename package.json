@@ -1,7 +1,7 @@
 {
     "name": "frogger-game",
     "version": "1.0.0",
-    "description": "Classic Frogger game using javascript and typescript",
+    "description": "Classic Frogger game using typescript",
     "main": "index.js",
     "scripts": {
       "start": "node index.js",
@@ -10,14 +10,14 @@
     },
     "repository": {
       "type": "git",
-      "url": "git+https://github.com/AfonsoCFonseca/Frogger-Game.git"
+      "url": "git+https://github.com/John-Ketiku-1/ICS4U-Final-Project-John"
     },
     "author": "",
     "license": "ISC",
     "bugs": {
-      "url": "https://github.com/AfonsoCFonseca/Frogger-Game/issues"
+      "url": "https://github.com/John-Ketiku-1/ICS4U-Final-Project-John/issues"
     },
-    "homepage": "https://github.com/AfonsoCFonseca/Frogger-Game#readme",
+    "homepage": "https://github.com/John-Ketiku-1/ICS4U-Final-Project-John#readme",
     "dependencies": {
       "express": "^4.17.1",
       "phaser": "^3.22.0",
